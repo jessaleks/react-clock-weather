@@ -35,8 +35,8 @@ function App() {
 		}
 		navigator.geolocation.getCurrentPosition(
 			(position) => {
-				setLat(Math.round(position.coords.latitude * 100) / 100);
-				setLng((Math.round(position.coords.longitude) * 100) / 100);
+				setLat(Math.round(position.coords.latitude * 1000) / 1000);
+				setLng((Math.round(position.coords.longitude) * 1000) / 1000);
 				getWeather(lat, lng);
 			},
 			(err) => {
@@ -57,6 +57,9 @@ function App() {
 					default:
 						setError('Something went wrong.');
 				}
+			},
+			{
+				enableHighAccuracy: true,
 			}
 		);
 	}
