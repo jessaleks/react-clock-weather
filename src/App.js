@@ -12,15 +12,20 @@ function App() {
 	// I can leave it here since it does not really matter if I do.
 	// In another cases, I would set an env variable
 	const apiKey = '28ae6e013ff441e4bcc115110212901';
-	const baseUrl = 'http://api.weatherapi.com/v1/forecast.json?key=' + apiKey;
+	const baseUrl = 'https://api.weatherapi.com/v1/forecast.json?key=' + apiKey;
 	var [time, setTime] = useState(new Date().toLocaleTimeString('pl-PL'));
-	const [lat, setLat] = useState(0);
-	const [lng, setLng] = useState(0);
+	var lat;
+	var lng;
+	const [jsonResponse, setJsonResponse] = useState(null);
 	const [error, setError] = useState(null);
 
-	function getWeather(lat, lng) {
-		fetch(`${baseUrl}&q=${lat},${lng}`)
-			.then((res) => console.log(res.json()))
+	function getWeather(latitude, longitude) {
+		fetch(`${baseUrl}&q=${latitude},${longitude}`)
+			.then((res) => res.json())
+			.then((data) => {
+				setJsonResponse(data);
+				console.log(jsonResponse);
+			})
 			.catch((err) => console.log(err));
 	}
 
@@ -35,8 +40,11 @@ function App() {
 		}
 		navigator.geolocation.getCurrentPosition(
 			(position) => {
-				setLat(Math.round(position.coords.latitude * 1000) / 1000);
-				setLng((Math.round(position.coords.longitude) * 1000) / 1000);
+				// lat and lng have to be normal variables bc otherwise the app bugs out and displays weather for... Mexico.
+				// I can't use useState because then the function runs once with the initial values (both variables being 0)
+				// and then the second time with the actual coordinates
+				lat = Math.round(position.coords.latitude * 1000) / 1000;
+				lng = Math.round(position.coords.longitude * 1000) / 1000;
 				getWeather(lat, lng);
 			},
 			(err) => {
@@ -57,9 +65,6 @@ function App() {
 					default:
 						setError('Something went wrong.');
 				}
-			},
-			{
-				enableHighAccuracy: true,
 			}
 		);
 	}
@@ -76,18 +81,23 @@ function App() {
 	// getting the location
 	useEffect(() => {
 		getLocationAndWeather();
-	}, [lat, lng, setLat, setLng]);
+	}, []);
 
 	return (
 		<div className="bg-gray-800 h-screen w-screen">
 			{error ? (
-				<div className=" text-center py-4 bg-red-300 text-red-800">
+				<div className=" text-center py-4 bg-red-300 text-red-900">
 					{error.toString()}
 				</div>
 			) : null}
-			<div className="mx-auto d-flex flex-col items-center justify-around text-white my-auto container">
-				<h2 className="text-8xl my-auto text-center">{time}</h2>
-				<p className="text-8xl text-center">❄</p>
+			<div className="mx-auto top-1/2 d-flex flex-col items-center justify-around text-white my-auto container">
+				<h2 className="text-8xl mt-auto text-center">{time}</h2>
+				{jsonResponse ? (
+					<p className="text-2xl mt-2 text-center">
+						Current temperature in {jsonResponse.location.name} is{' '}
+						{jsonResponse.current.temp_c} C.
+					</p>
+				) : null}
 			</div>
 		</div>
 	);
